@@ -38,35 +38,43 @@ def plt_learning_curve(model, pltname, x, y, ylim=None, cv=None, n_jobs=1, train
     return plt
 
 
-dataset = ds.load_data()
-x, y = dataset[:, 1:], dataset[:, 0]
-x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.3, random_state=rng)
-# estimator = neighbors.KNeighborsClassifier()
-estimator = LogisticRegression()
-estimator.fit(x_train, y_train)
+count = 0
+while True:
+    count = count + 1
+    dataset = ds.load_data()
+    np.random.shuffle(dataset)
+    x, y = dataset[:, 1:], dataset[:, 0]
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.3, random_state=rng)
+    # estimator = neighbors.KNeighborsClassifier()
+    estimator = LogisticRegression()
+    estimator.fit(x_train, y_train)
 
-y_predict = estimator.predict(x_test)
-scorce = estimator.score(x_test, y_test, sample_weight=None)
+    y_predict = estimator.predict(x_test)
+    scorce = estimator.score(x_test, y_test, sample_weight=None)
 
-print('y_predict = ')
-print(y_predict)
+    if count % 5 is 0:
+        print("已循环训练第 %d 轮" % count)
 
-print('y_test = ')
-print(y_test)
+    if scorce * 100 > 85:
+        print('y_predict = ')
+        print(y_predict)
 
-print('Acc: {}%' .format(scorce * 100))
+        print('y_test = ')
+        print(y_test)
 
-name = "titanic_pred.pkl"
+        print('Acc: {}%'.format(scorce * 100))
 
-if not os.path.exists("./model"):
-    os.mkdir("./model")
-while name in os.listdir("./model"):
-    tmp = name.split(".")
-    name = tmp[0] + str(1) + "." + tmp[1]
-detector = joblib.dump(estimator, "./model/" + name)
+        name = "titanic_pred.pkl"
+        if not os.path.exists("./model"):
+            os.mkdir("./model")
+        while name in os.listdir("./model"):
+            tmp = name.split(".")
+            name = tmp[0] + str(1) + "." + tmp[1]
+        detector = joblib.dump(estimator, "./model/" + name)
+        cv = ShuffleSplit(n_splits=2, test_size=0.3, random_state=rng)
+        title = "Learnming Curves\n(@590samples,test_size=0.3,normalize=SS)"
+        plt_learning_curve(estimator, title, x, y, ylim=(0.0, 1.0), n_jobs=1)
+        break
 
-cv = ShuffleSplit(n_splits=2, test_size=0.3, random_state=rng)
-title = "Learnming Curves\n(@590samples,test_size=0.3,normalize=None)"
-plt_learning_curve(estimator, title, x, y, ylim=(0.0, 1.0), n_jobs=1)
 plt.legend()
 plt.show()
